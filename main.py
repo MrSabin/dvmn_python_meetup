@@ -8,7 +8,10 @@ from telegram.ext import (
     CallbackQueryHandler,
     ConversationHandler,
 )
-speakers = [[3, "1070225969", "Riches Starkoni", "50 shades of API in Python", "2022-07-28 20:20:00", "2022-07-28 20:25:00"], [4, "171951902", "MrSabin", "Zen of Django ORM", "2022-07-28 20:25:00", "2022-07-28 20:30:00"]]
+
+speakers = [
+    [3, "1070225969", "Riches Starkoni", "50 shades of API in Python", "2022-07-28 20:20:00", "2022-07-28 20:25:00"],
+    [4, "171951902", "MrSabin", "Zen of Django ORM", "2022-07-28 20:25:00", "2022-07-28 20:30:00"]]
 # Этапы/состояния разговора
 FIRST, SECOND = range(2)
 # Данные обратного вызова
@@ -17,9 +20,9 @@ ONE, TWO, THREE, FOUR = range(4)
 
 def start(update, _):
     """Вызывается по команде `/start`."""
-    # Создаем `InlineKeyboard`, где каждая кнопка имеет 
+    # Создаем `InlineKeyboard`, где каждая кнопка имеет
     # отображаемый текст и строку `callback_data`
-    # Клавиатура - это список строк кнопок, где каждая строка, 
+    # Клавиатура - это список строк кнопок, где каждая строка,
     # в свою очередь, является списком `[[...]]`
     keyboard = [
         [
@@ -57,14 +60,11 @@ def open_menu(update, _):
 
 
 def open_speakers(update, _):
-    n_cols = 1
-    menu = [speakers[i:i + n_cols] for i in range(0, len(speakers), n_cols)]
     """Показ нового выбора кнопок"""
     query = update.callback_query
     query.answer()
-    print(menu)
-    keyboard = [
-    [
+    keyboard = [[InlineKeyboardButton(name[2], callback_data=str(ONE)) for name in speakers],
+        [
             InlineKeyboardButton("Описание программы", callback_data=str(ONE)),
             InlineKeyboardButton("F.A.Q", callback_data=str(THREE)),
             InlineKeyboardButton("Покинуть", callback_data=str(FOUR)),
@@ -96,13 +96,14 @@ def open_faq(update, _):
 
 
 def end(update, _):
-    """Возвращает `ConversationHandler.END`, который говорит 
+    """Возвращает `ConversationHandler.END`, который говорит
     `ConversationHandler` что разговор окончен"""
     query = update.callback_query
     query.answer()
     end_text = 'Спасибо, что слушаете нас'
     query.edit_message_text(text=end_text)
     return ConversationHandler.END
+
 
 def main():
     load_dotenv()
@@ -120,7 +121,7 @@ def main():
     # Таким образом, паттерн `^ABC$` будет ловить только 'ABC'
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
-        states={ # словарь состояний разговора, возвращаемых callback функциями
+        states={  # словарь состояний разговора, возвращаемых callback функциями
             FIRST: [
                 CallbackQueryHandler(open_menu, pattern='^' + str(ONE) + '$'),
                 CallbackQueryHandler(open_speakers, pattern='^' + str(TWO) + '$'),
@@ -128,7 +129,7 @@ def main():
                 CallbackQueryHandler(end, pattern='^' + str(FOUR) + '$'),
             ],
             SECOND: [
-                
+
             ],
         },
         fallbacks=[CommandHandler('start', start)],
@@ -140,6 +141,7 @@ def main():
 
     updater.start_polling()
     updater.idle()
+
 
 if __name__ == "__main__":
     main()
