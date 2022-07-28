@@ -71,7 +71,7 @@ def open_speakers(update, _):
     """Показ нового выбора кнопок"""
     query = update.callback_query
     query.answer()
-    keyboard = [[InlineKeyboardButton(name[2], callback_data=str(ONE)) for name in speakers],
+    keyboard = [[InlineKeyboardButton(name[2], callback_data=name[1]) for name in speakers],
         [
             InlineKeyboardButton("Описание программы", callback_data=str(ONE)),
             InlineKeyboardButton("F.A.Q", callback_data=str(THREE)),
@@ -80,7 +80,7 @@ def open_speakers(update, _):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     query.edit_message_text(
-        text="С докладом сегодня выступают:", reply_markup=reply_markup
+        text=add_text_speaker(), reply_markup=reply_markup
     )
     return FIRST
 
