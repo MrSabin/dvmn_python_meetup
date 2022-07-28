@@ -106,7 +106,6 @@ def end(update, _):
 
 def main():
     load_dotenv()
-    speakers = {'MrSabin': 171951902, 'Riches Starkoni': 1070225969, 'Andrey Shukatka': 406853012}
     chat_id = os.environ.get('CHAT_ID')
     tg_token = os.environ.get("TG_TOKEN")
     bot = telegram.Bot(token=tg_token)
