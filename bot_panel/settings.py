@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-hkrod-ip7a^n+1_b7=*6euul@kx9yhnecfaochq*uo*0d(u4ra
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
