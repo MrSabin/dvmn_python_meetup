@@ -18,6 +18,14 @@ FIRST, SECOND = range(2)
 ONE, TWO, THREE, FOUR = range(4)
 
 
+def add_text_speaker():
+    text = f'С докладом сегодня выступает:\n'
+    for i in speakers:
+        text2 =f'Спикер {i[2]}, на тему "{i[3]}", начало {i[4]}, конец {i[5]}\n'
+        text = text + text2
+    return text
+
+
 def start(update, _):
     """Вызывается по команде `/start`."""
     # Создаем `InlineKeyboard`, где каждая кнопка имеет
