@@ -75,8 +75,11 @@ def start_report(update, _):
     )
     with sqlite3.connect('db.sqlite3') as db:
         cur = db.cursor()
-        sql_update_query = f"""Update bot_db_speaker set recording_progress = 1 where telegram_id = {speaker_id}"""
+        sql_update_query = f"Update bot_db_speaker set recording_progress = 1 where telegram_id = {speaker_id}"
+        sql_stop_report = f'Update bot_db_speaker set time_start = "{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}" where telegram_id = {speaker_id}'
         cur.execute(sql_update_query)
+        cur.execute(sql_stop_report)
+
 
 
 def stop_report(update, _):
@@ -96,7 +99,7 @@ def stop_report(update, _):
     with sqlite3.connect('db.sqlite3') as db:
         cur = db.cursor()
         sql_update_query = f"Update bot_db_speaker set recording_progress = '' where telegram_id = {speaker_id}"
-        sql_stop_report = f'Update bot_db_speaker set time_stop = {datetime.datetime.now()} where telegram_id = {speaker_id}'
+        sql_stop_report = f'Update bot_db_speaker set time_stop = "{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}" where telegram_id = {speaker_id}'
         cur.execute(sql_update_query)
         cur.execute(sql_stop_report)
 
