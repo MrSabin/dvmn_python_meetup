@@ -58,6 +58,27 @@ def create_date(info):
     return start_time, finish_date
 
 
+def start_report(update, _):
+    query = update.callback_query
+    query.answer()
+    time = datetime.datetime.now()
+    keyboard = [
+        [InlineKeyboardButton("Закончить доклад", callback_data=str(TWO))],
+        [InlineKeyboardButton("Докладчики", callback_data=str(TWO)),
+         InlineKeyboardButton("Меню", callback_data=str(ONE))],
+        ]
+    theme_text = f"Доклад начался в {time.strftime('%H:%M:%S %Y-%m-%d')}"
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    query.edit_message_text(
+        text=theme_text, reply_markup=reply_markup
+    )
+    with sqlite3.connect('db.sqlite3') as db:
+        cur = db.cursor()
+        cur.execute("INSERT INTO bot_db_speaker VALUES(recording_progress);", 1)
+        db.commit()
+
+
+
 def add_text_speaker():
     all_text = f'С докладом сегодня выступает:\n'
     n = 1
@@ -143,7 +164,7 @@ def start(update, _):
         return FIRST
     else:
         keyboard = [
-            [InlineKeyboardButton("Начать доклад", callback_data=str(TWO))],
+            [InlineKeyboardButton("Начать доклад", callback_data=str(SIX))],
             [InlineKeyboardButton("Закончить доклад", callback_data=str(TWO))],
             [
                 InlineKeyboardButton("Докладчики", callback_data=str(TWO)),
@@ -189,7 +210,7 @@ def open_menu(update, _):
         return FIRST
     else:
         keyboard = [
-            [InlineKeyboardButton("Начать доклад", callback_data=str(TWO))],
+            [InlineKeyboardButton("Начать доклад", callback_data=str(SIX))],
             [InlineKeyboardButton("Закончить доклад", callback_data=str(TWO))],
             [
                 InlineKeyboardButton("Докладчики", callback_data=str(TWO)),
@@ -283,6 +304,9 @@ def main():
                 CallbackQueryHandler(
                     send_message_for_speaker, pattern='^' + str(FIVE) + '$'
                 ),
+                CallbackQueryHandler(
+                    start_report, pattern='^' + str(SIX) + '$'
+                )
             ]
     for info_speaker in speakers:
         first.append(CallbackQueryHandler(
