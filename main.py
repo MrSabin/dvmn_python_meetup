@@ -2,6 +2,7 @@ import os
 import datetime
 import locale
 import sqlite3
+import telegram
 from dotenv import load_dotenv
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
@@ -12,19 +13,26 @@ from telegram.ext import (
 )
 
 locale.setlocale(locale.LC_ALL, "ru")
+speakers = []
 
-with sqlite3.connect('db.sqlite3') as db:
-    cur = db.cursor()
-
-
-speakers = [
-    [3, "1070225969", "Riches Starkoni", "50 shades of API in Python", "2022-07-28 20:20:00", "2022-07-28 20:25:00"],
-    [4, "171951902", "MrSabin", "Zen of Django ORM", "2022-07-28 20:25:00", "2022-07-28 20:30:00"]
-]
 # Этапы/состояния разговора
 FIRST, SECOND = range(2)
 # Данные обратного вызова
 ONE, TWO, THREE, FOUR, FIVE, SIX = range(6)
+
+
+def process_the_message(update, context):
+    text = 'Ваш вопрос отправлен'
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text=text)
+    print(update)
+
+def create_speakers_list(speakers):
+    with sqlite3.connect('db.sqlite3') as db:
+        cur = db.cursor()
+    for i in cur.execute("SELECT * FROM bot_db_speaker;"):
+        speakers.append(i)
+
 
 def create_date(info):
     start_time = datetime.datetime.strptime(info[4], "%Y-%m-%d %H:%M:%S").strftime('%d %b %H:%M')
@@ -44,19 +52,35 @@ def add_text_speaker():
     return all_text
 
 
+def send_message_for_speaker(update, _):
+    query = update.callback_query
+    query.answer()
+    keyboard = [
+            [InlineKeyboardButton("Докладчики", callback_data=str(TWO)),
+            InlineKeyboardButton("Меню", callback_data=str(ONE))]
+    ]
+
+    theme_text = f"Напишите Ваш вопрос для докладчика"
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    query.edit_message_text(
+        text=theme_text, reply_markup=reply_markup
+    )
+
+    return FIRST
+
 def theme_spiker(update, _):
     query = update.callback_query
     query.answer()
     for info in speakers:
         if info[1] == query.data:
-            theme_text = f"Выбран {info[2]}\nТема доклада {info[3]}\n" \
-                         f"Начало выступления {create_date(info)[0]}\n" \
+            theme_text = f'Выбран {info[2]}\nТема доклада "{info[3]}"\n' \
+                         f'Начало выступления {create_date(info)[0]}\n' \
                          f"Окончаниеи выступления {create_date(info)[1]}"
-    keyboard = [
-            [InlineKeyboardButton("Задать вопрос", callback_data=str(THREE))],
-            [InlineKeyboardButton("Докладчики", callback_data=str(TWO)),
-            InlineKeyboardButton("Меню", callback_data=str(ONE))]
-    ]
+            keyboard = [
+                    [InlineKeyboardButton("Задать вопрос", callback_data=str(FIVE))],
+                    [InlineKeyboardButton("Докладчики", callback_data=str(TWO)),
+                    InlineKeyboardButton("Меню", callback_data=str(ONE))]
+        ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     query.edit_message_text(
         text=theme_text, reply_markup=reply_markup
@@ -159,14 +183,17 @@ def main():
     tg_token = os.environ.get("TG_TOKEN")
     updater = Updater(tg_token)
     dispatcher = updater.dispatcher
+    create_speakers_list(speakers)
     first = [
                 CallbackQueryHandler(open_menu, pattern='^' + str(ONE) + '$'),
                 CallbackQueryHandler(open_speakers, pattern='^' + str(TWO) + '$'),
                 CallbackQueryHandler(open_faq, pattern='^' + str(THREE) + '$'),
                 CallbackQueryHandler(end, pattern='^' + str(FOUR) + '$'),
+                CallbackQueryHandler(send_message_for_speaker, pattern='^' + str(FIVE) + '$'),
             ]
     for info_speaker in speakers:
         first.append(CallbackQueryHandler(theme_spiker, pattern='^' + str(info_speaker[1]) + '$'))
+
 
     # Настройка обработчика разговоров с состояниями `FIRST` и `SECOND`
     # Используем параметр `pattern` для передачи `CallbackQueries` с
