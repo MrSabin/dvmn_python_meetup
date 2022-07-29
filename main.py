@@ -21,7 +21,7 @@ tg_token = os.environ.get("TG_TOKEN")
 # Этапы/состояния разговора
 FIRST, SECOND = range(2)
 # Данные обратного вызова
-ONE, TWO, THREE, FOUR, FIVE, SIX = range(6)
+ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN = range(7)
 
 
 def main_handler(update, context):
@@ -59,11 +59,12 @@ def create_date(info):
 
 
 def start_report(update, _):
+    speaker_id = update.callback_query.message.chat.id
     query = update.callback_query
     query.answer()
     time = datetime.datetime.now()
     keyboard = [
-        [InlineKeyboardButton("Закончить доклад", callback_data=str(TWO))],
+        [InlineKeyboardButton("Закончить доклад", callback_data=str(SEVEN))],
         [InlineKeyboardButton("Докладчики", callback_data=str(TWO)),
          InlineKeyboardButton("Меню", callback_data=str(ONE))],
         ]
@@ -74,9 +75,30 @@ def start_report(update, _):
     )
     with sqlite3.connect('db.sqlite3') as db:
         cur = db.cursor()
-        cur.execute("INSERT INTO bot_db_speaker VALUES(recording_progress);", 1)
-        db.commit()
+        sql_update_query = f"""Update bot_db_speaker set recording_progress = 1 where telegram_id = {speaker_id}"""
+        cur.execute(sql_update_query)
 
+
+def stop_report(update, _):
+    speaker_id = update.callback_query.message.chat.id
+    query = update.callback_query
+    query.answer()
+    time = datetime.datetime.now()
+    keyboard = [
+        [InlineKeyboardButton("Докладчики", callback_data=str(TWO)),
+         InlineKeyboardButton("Меню", callback_data=str(ONE))],
+    ]
+    theme_text = f"Доклад закончился в {time.strftime('%H:%M:%S %Y-%m-%d')}"
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    query.edit_message_text(
+        text=theme_text, reply_markup=reply_markup
+    )
+    with sqlite3.connect('db.sqlite3') as db:
+        cur = db.cursor()
+        sql_update_query = f"Update bot_db_speaker set recording_progress = '' where telegram_id = {speaker_id}"
+        sql_stop_report = f'Update bot_db_speaker set time_stop = {datetime.datetime.now()} where telegram_id = {speaker_id}'
+        cur.execute(sql_update_query)
+        cur.execute(sql_stop_report)
 
 
 def add_text_speaker():
@@ -165,7 +187,6 @@ def start(update, _):
     else:
         keyboard = [
             [InlineKeyboardButton("Начать доклад", callback_data=str(SIX))],
-            [InlineKeyboardButton("Закончить доклад", callback_data=str(TWO))],
             [
                 InlineKeyboardButton("Докладчики", callback_data=str(TWO)),
                 InlineKeyboardButton("F.A.Q", callback_data=str(THREE)),
@@ -211,7 +232,7 @@ def open_menu(update, _):
     else:
         keyboard = [
             [InlineKeyboardButton("Начать доклад", callback_data=str(SIX))],
-            [InlineKeyboardButton("Закончить доклад", callback_data=str(TWO))],
+            [InlineKeyboardButton("Закончить доклад", callback_data=str(SEVEN))],
             [
                 InlineKeyboardButton("Докладчики", callback_data=str(TWO)),
                 InlineKeyboardButton("F.A.Q", callback_data=str(THREE)),
@@ -306,7 +327,11 @@ def main():
                 ),
                 CallbackQueryHandler(
                     start_report, pattern='^' + str(SIX) + '$'
+                ),
+                CallbackQueryHandler(
+                    stop_report, pattern='^' + str(SEVEN) + '$'
                 )
+
             ]
     for info_speaker in speakers:
         first.append(CallbackQueryHandler(
