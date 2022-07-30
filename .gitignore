@@ -153,3 +153,4 @@ cython_debug/
 *.sublime-workspace
 *.sublime-project
 images/
+tg_bot.py
